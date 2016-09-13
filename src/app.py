@@ -1,62 +1,17 @@
-import os
 import random
 import re
 import time
+
 from sqlite3 import IntegrityError
 
-from celery import Celery
-from slackclient import SlackClient
-from sqlalchemy import Boolean, Column, String, DateTime, ForeignKey, Integer, create_engine, func
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
-
-SLACK_WEBHOOK_SECRET = os.environ.get('SLACK_WEBHOOK_SECRET')
-slack_client = SlackClient('EjV7K0o6LcTTGRSdNB2kw9tm')
+from conf import BREW_COUNTDOWN, VERSION
+from models import User, Server, Customer, session
+from slack_client import sc
+from tasks import brew_countdown
+from utils import post_message
 
 COMMAND_RE = re.compile(r'^<@U2ATJ8BMJ> (register|brew|me|stats|yo|ping|help)?\s?(.*)$', flags=re.IGNORECASE)
 MENTION_RE = re.compile(r'<@U2ATJ8BMJ>')
-
-BREW_COUNTDOWN = 10
-
-VERSION = '0.1'
-
-engine = create_engine('sqlite:////tmp/test.db', echo=True)
-Base = declarative_base()
-
-Session = sessionmaker(bind=engine)
-session = Session()
-
-celery = Celery('app', broker='redis://localhost:6379', backend='redis://localhost:6379')
-
-
-class User(Base):
-    __tablename__ = 'user'
-    id = Column(Integer, primary_key=True)
-    slack_id = Column(String(255), unique=True)
-    username = Column(String(255), unique=True)
-    email = Column(String(255), nullable=True)
-    real_name = Column(String(255), nullable=True)
-
-    tea_type = Column(String(1024))
-
-
-class Server(Base):
-    __tablename__ = 'server'
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'))
-    user = relationship('User', foreign_keys=[user_id])
-    completed = Column(Boolean, default=False)
-    created = Column(DateTime, default=func.current_timestamp())
-
-
-class Customer(Base):
-    __tablename__ = 'customer'
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'))
-    server_id = Column(Integer, ForeignKey('server.id'))
-    user = relationship('User', foreign_keys=[user_id])
-    server = relationship('Server', foreign_keys=[server_id])
-    created = Column(DateTime, default=func.current_timestamp())
 
 
 def save_slack_users():
@@ -111,29 +66,6 @@ def me(slack_user_id):
     return post_message('Hang tight %s, tea is being served soon' % user.real_name)
 
 
-@celery.task
-def brew_countdown():
-    server = session.query(Server).filter_by(completed=False).first()
-    server.completed = True
-    customers = session.query(Customer).filter_by(server_id=server.id)
-    session.commit()
-
-    if not customers.count():
-        return post_message('Time is up! Looks like no one else wants a cuppa.')
-
-    return post_message("\n".join(
-        ['Time is up!'] +
-        ['%s wants %s' % (customer.user.real_name, customer.user.tea_type) for customer in customers]
-    ))
-
-
-def post_message(text):
-    sc.api_call('chat.postMessage', channel='ocado', text=text)
-
-
-sc = SlackClient('xoxb-78936283732-6Oq4LiF3exiv91PkfVmX8Gln')
-
-
 if __name__ == "__main__":
     if sc.rtm_connect():
         while True:
@@ -150,7 +82,7 @@ if __name__ == "__main__":
                     elif command == 'me':
                         me(slack_user_id)
                     elif command == 'stats':
-                        post_message('Sorry, I don\'t know how to do that')
+                        post_message('Sorry, I don\'t know how to do that yet')
                     elif command == 'help':
                         post_message('''
 *TeaBot v%s Available Commands*
