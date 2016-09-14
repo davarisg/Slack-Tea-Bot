@@ -98,5 +98,5 @@ if __name__ == "__main__":
                         post_message('pong')
                 except AttributeError:
                     if MENTION_RE.search(text):
-                        post_message('No idea what this means mate.')
+                        post_message('No idea what that means mate.')
             time.sleep(1)
