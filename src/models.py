@@ -18,6 +18,9 @@ class User(Base):
     username = Column(String(255), unique=True)
     email = Column(String(255), nullable=True)
     real_name = Column(String(255), nullable=True)
+    first_name = Column(String(255), nullable=True)
+    last_name = Column(String(255), nullable=True)
+    deleted = Column(Boolean, default=False)
 
     tea_type = Column(String(1024))
 

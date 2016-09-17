@@ -47,18 +47,27 @@ def update_slack_users():
         username = member.get('name')
         email = member.get('profile').get('email', '')
         real_name = member.get('profile').get('real_name', '')
+        first_name = member.get('profile').get('first_name', '')
+        last_name = member.get('profile').get('last_name', '')
+        deleted = member.get('profile').get('deleted')
 
         user = session.query(User).filter_by(slack_id=slack_id).first()
         if user:
             user.username = username
             user.email = email
             user.real_name = real_name
+            user.first_name = first_name
+            user.last_name = last_name
+            user.deleted = deleted
         else:
             session.add(User(
                 slack_id=slack_id,
                 username=username,
                 email=email,
                 real_name=real_name,
+                first_name=first_name,
+                last_name=last_name,
+                deleted=deleted
             ))
 
         session.commit()
