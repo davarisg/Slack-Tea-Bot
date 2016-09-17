@@ -16,5 +16,13 @@ def get_or_create(session, model, defaults=None, **kwargs):
         return instance, True
 
 
-def post_message(text, channel=CHANNEL):
-    sc.api_call('chat.postMessage', channel=channel, text=text)
+def post_message(text, channel=CHANNEL, attachments=None, mrkdwn=False):
+    sc.api_call(
+        'chat.postMessage',
+        channel=channel,
+        text=text,
+        icon_emoji=':tea:',
+        username='Tea Bot',
+        mrkdwn=mrkdwn,
+        attachments=attachments
+    )
