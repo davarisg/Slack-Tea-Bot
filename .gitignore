@@ -87,3 +87,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+.idea/
+
+celerybeat-schedule.db
+dump.rdb
