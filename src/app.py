@@ -2,8 +2,6 @@ import random
 import re
 import time
 
-from sqlite3 import IntegrityError
-
 from conf import BREW_COUNTDOWN, VERSION
 from models import User, Server, Customer, session
 from slack_client import sc
@@ -16,16 +14,25 @@ MENTION_RE = re.compile(r'<@U2ATJ8BMJ>')
 
 def save_slack_users():
     for member in sc.api_call('users.list')['members']:
-        session.add(User(
-            slack_id=member.get('id'),
-            username=member.get('name'),
-            email=member.get('profile').get('email', ''),
-            real_name=member.get('profile').get('real_name', ''),
-        ))
-        try:
-            session.commit()
-        except IntegrityError:
-            pass
+        slack_id = member.get('id')
+        username = member.get('name')
+        email = member.get('profile').get('email', '')
+        real_name = member.get('profile').get('real_name', '')
+
+        user = session.query(User).filter_by(slack_id=slack_id).first()
+        if user:
+            user.username = username
+            user.email = email
+            user.real_name = real_name
+        else:
+            session.add(User(
+                slack_id=slack_id,
+                username=username,
+                email=email,
+                real_name=real_name,
+            ))
+
+        session.commit()
 
 
 def register(slack_user_id, tea_type):
