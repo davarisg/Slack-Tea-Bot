@@ -1,10 +1,24 @@
 from celery import Celery
+from celery.schedules import crontab
 
 from conf import CELERY_BROKER, CELERY_BACKEND
-from models import Server, Customer, session
+from models import Server, Customer, session, User
+from slack_client import sc
 from utils import post_message
 
 celery = Celery('app', broker=CELERY_BROKER, backend=CELERY_BACKEND)
+celery.conf.update(
+    CELERY_TASK_SERIALIZER='json',
+    CELERY_ACCEPT_CONTENT=['json'],
+    CELERY_RESULT_SERIALIZER='json',
+    CELERY_TIMEZONE='UTC',
+    CELERYBEAT_SCHEDULE={
+        'update-slack-users': {
+            'task': 'tasks.update_slack_users',
+            'schedule': crontab(hour='*')
+        }
+    },
+)
 
 
 @celery.task
@@ -21,3 +35,30 @@ def brew_countdown():
         ['Time is up!'] +
         ['%s wants %s' % (customer.user.real_name, customer.user.tea_type) for customer in customers]
     ))
+
+
+@celery.task
+def update_slack_users():
+    """
+    Periodic task to update slack user info
+    """
+    for member in sc.api_call('users.list')['members']:
+        slack_id = member.get('id')
+        username = member.get('name')
+        email = member.get('profile').get('email', '')
+        real_name = member.get('profile').get('real_name', '')
+
+        user = session.query(User).filter_by(slack_id=slack_id).first()
+        if user:
+            user.username = username
+            user.email = email
+            user.real_name = real_name
+        else:
+            session.add(User(
+                slack_id=slack_id,
+                username=username,
+                email=email,
+                real_name=real_name,
+            ))
+
+        session.commit()

@@ -12,29 +12,6 @@ COMMAND_RE = re.compile(r'^<@U2ATJ8BMJ> (register|brew|me|stats|yo|ping|help)?\s
 MENTION_RE = re.compile(r'<@U2ATJ8BMJ>')
 
 
-def save_slack_users():
-    for member in sc.api_call('users.list')['members']:
-        slack_id = member.get('id')
-        username = member.get('name')
-        email = member.get('profile').get('email', '')
-        real_name = member.get('profile').get('real_name', '')
-
-        user = session.query(User).filter_by(slack_id=slack_id).first()
-        if user:
-            user.username = username
-            user.email = email
-            user.real_name = real_name
-        else:
-            session.add(User(
-                slack_id=slack_id,
-                username=username,
-                email=email,
-                real_name=real_name,
-            ))
-
-        session.commit()
-
-
 def register(slack_user_id, tea_type):
     if not tea_type:
         return post_message('You didn\'t tell me what type of tea you like. Try typing `@teabot register green tea`')
