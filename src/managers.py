@@ -7,6 +7,10 @@ class UserManager(object):
     def get_by_slack_id(cls, slack_id):
         return session.query(User).filter_by(slack_id=slack_id).first()
 
+    @classmethod
+    def get_by_username(cls, username):
+        return session.query(User).filter_by(slack_id=username).first()
+
 
 class ServerManager(object):
     @classmethod
