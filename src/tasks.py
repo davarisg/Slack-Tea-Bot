@@ -28,7 +28,7 @@ def brew_countdown():
     customers = session.query(Customer).filter_by(server_id=server.id)
     session.commit()
 
-    for customer in customers:
+    for customer in customers.all():
         customer.user.teas_drunk += 1
         customer.user.teas_received += 1
         server.user.teas_brewed += 1
@@ -38,7 +38,7 @@ def brew_countdown():
     server.user.times_brewed += 1
 
     # There must be at least 1 customer to get a nomination point.
-    if len(customers):
+    if customers.count():
         server.user.nomination_points += 1
 
     if not customers.count():
