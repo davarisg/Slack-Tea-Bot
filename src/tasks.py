@@ -37,6 +37,10 @@ def brew_countdown():
     server.user.teas_drunk += 1
     server.user.times_brewed += 1
 
+    # There must be at least 1 customer to get a nomination point.
+    if len(customers):
+        server.user.nomination_points += 1
+
     if not customers.count():
         return post_message('Time is up! Looks like no one else wants a cuppa.')
 

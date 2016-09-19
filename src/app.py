@@ -2,7 +2,7 @@ import random
 import re
 import time
 
-from conf import BREW_COUNTDOWN, VERSION
+from conf import BREW_COUNTDOWN, VERSION, NOMINATION_POINTS_REQUIRED
 from decorators import require_registration
 from managers import UserManager, ServerManager
 from models import Server, Customer, session, User
@@ -10,7 +10,7 @@ from slack_client import sc
 from tasks import brew_countdown
 from utils import post_message
 
-COMMAND_RE = re.compile(r'^<@([\w\d]+)> (register|brew|me|stats|leaderboard|yo|ping|help)?\s?(.*)$', flags=re.IGNORECASE)
+COMMAND_RE = re.compile(r'^<@([\w\d]+)> (register|brew|me|stats|leaderboard|nominate|yo|ping|help)?\s?(.*)$', flags=re.IGNORECASE)
 TEABOT_MENTION_RE = re.compile(r'<@([\w\d]+)>')
 MENTION_RE = re.compile(r'^<@([\w\d]+)>$')
 
@@ -109,6 +109,12 @@ def nominate(user, command_body=None):
         return post_message('You must nominate another user to brew!')
 
     nominated_user = UserManager.get_by_slack_id(slack_id)
+    if nominated_user.nomination_points < NOMINATION_POINTS_REQUIRED:
+        return post_message('You can\'t nominate someone unless you brew tea %s times!' % NOMINATION_POINTS_REQUIRED)
+
+    # Subtract nomination points from request user.
+    nominated_user.nomination_points -= NOMINATION_POINTS_REQUIRED
+
     session.add(Server(user_id=nominated_user.id))
     session.commit()
     brew_countdown.apply_async(countdown=BREW_COUNTDOWN)
@@ -123,6 +129,7 @@ def leaderboard():
         _message += '%s. _%s_ has brewed *%s* cups of tea\n' % (index + 1, user.real_name, user.teas_brewed)
 
     return post_message(_message)
+
 
 if __name__ == "__main__":
     if sc.rtm_connect():
