@@ -1,3 +1,5 @@
 from slackclient import SlackClient
 
-sc = SlackClient('xoxb-80820687573-JNvDRK6agGEciutmtXaLcmWM')
+from conf import SLACK_WEBHOOK_SECRET
+
+sc = SlackClient(SLACK_WEBHOOK_SECRET)
