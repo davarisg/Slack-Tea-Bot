@@ -19,7 +19,7 @@ def register(user, tea_type):
     if not tea_type:
         return post_message('You didn\'t tell me what type of tea you like. Try typing `@teabot register green tea`')
 
-    message = 'Welcome to the tea party %s' % user.real_name
+    message = 'Welcome to the tea party %s' % user.first_name
     if user.tea_type:
         message = 'I have updated your tea preference.'
 
@@ -37,23 +37,23 @@ def brew(user):
     session.add(Server(user_id=user.id))
     session.commit()
     brew_countdown.apply_async(countdown=BREW_COUNTDOWN)
-    return post_message(random.choice(['%s is making tea, who is in?' % user.real_name, 'Who wants a cuppa?']))
+    return post_message(random.choice(['%s is making tea, who is in?' % user.first_name, 'Who wants a cuppa?']))
 
 
 @require_registration
 def me(user):
     server = session.query(Server).filter_by(completed=False)
     if not server.count():
-        return post_message('No one has volunteered to make tea, why dont you make it %s?' % user.real_name)
+        return post_message('No one has volunteered to make tea, why dont you make it %s?' % user.first_name)
 
     server = server.first()
 
     if session.query(Customer).filter_by(user_id=user.id, server_id=server.id).count():
-        return post_message('You said it once already %s.' % user.real_name)
+        return post_message('You said it once already %s.' % user.first_name)
 
     session.add(Customer(user_id=user.id, server_id=server.id))
     session.commit()
-    return post_message('Hang tight %s, tea is being served soon' % user.real_name)
+    return post_message('Hang tight %s, tea is being served soon' % user.first_name)
 
 
 def stats(command_body=None):
