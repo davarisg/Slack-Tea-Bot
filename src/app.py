@@ -17,7 +17,6 @@ MENTION_RE = re.compile(r'^<@([\w\d]+)>$')
 # Decorator
 def require_registration(func):
     def func_wrapper(self, *args, **kwargs):
-        print self.__dict__
         if not self.request_user.tea_type:
             return post_message('You need to register first.')
         else:
