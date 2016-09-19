@@ -9,6 +9,8 @@ CELERY_BACKEND = 'redis://localhost:6379'
 
 BREW_COUNTDOWN = 10
 
-VERSION = '0.1'
+VERSION = '0.2'
 
-CHANNEL = 'ocado'
+CHANNEL = 'general'
+
+NOMINATION_POINTS_REQUIRED = 15

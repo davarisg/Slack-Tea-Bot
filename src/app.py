@@ -2,7 +2,7 @@ import random
 import re
 import time
 
-from conf import BREW_COUNTDOWN, VERSION
+from conf import BREW_COUNTDOWN, VERSION, NOMINATION_POINTS_REQUIRED
 from decorators import require_registration
 from managers import UserManager, ServerManager
 from models import Server, Customer, session, User
@@ -10,7 +10,7 @@ from slack_client import sc
 from tasks import brew_countdown
 from utils import post_message
 
-COMMAND_RE = re.compile(r'^<@([\w\d]+)> (register|brew|me|stats|yo|ping|help)?\s?(.*)$', flags=re.IGNORECASE)
+COMMAND_RE = re.compile(r'^<@([\w\d]+)> (register|brew|me|stats|leaderboard|nominate|yo|ping|help)?\s?(.*)$', flags=re.IGNORECASE)
 TEABOT_MENTION_RE = re.compile(r'<@([\w\d]+)>')
 MENTION_RE = re.compile(r'^<@([\w\d]+)>$')
 
@@ -74,21 +74,12 @@ def stats(command_body=None):
     results = []
 
     for user in users:
-        servers = session.query(Server).filter_by(user_id=user.id)
-        customers = session.query(Customer).filter_by(user_id=user.id)
-        number_of_teas_drunk = servers.count() + customers.count()
-        number_of_teas_brewed = session.query(Customer).filter(
-            Customer.server_id.in_([server.id for server in servers])
-        ).count() + servers.count()
-        number_of_times_brewed = servers.count()
-        number_of_teas_received = customers.count()
-
         results.append({
             'author_name': user.real_name,
-            'number_of_teas_drunk': number_of_teas_drunk,
-            'number_of_teas_brewed': number_of_teas_brewed,
-            'number_of_times_brewed': number_of_times_brewed,
-            'number_of_teas_received': number_of_teas_received
+            'teas_drunk': user.teas_drunk,
+            'teas_brewed': user.teas_brewed,
+            'times_brewed': user.times_brewed,
+            'teas_received': user.teas_received
         })
 
     return post_message('', attachments=[
@@ -98,7 +89,7 @@ def stats(command_body=None):
             "author_name": "%s" % result['author_name'],
             "fields": [
                 {
-                    "value": "Number of tea cups consumed -> %(number_of_teas_drunk)s\nNumber of tea cups brewed -> %(number_of_teas_brewed)s\nNumber of times you've brewed tea -> %(number_of_times_brewed)s\nNumber of tea cups you were served -> %(number_of_teas_received)s" % result,
+                    "value": "Number of tea cups consumed -> %(teas_drunk)s\nNumber of tea cups brewed -> %(teas_brewed)s\nNumber of times you've brewed tea -> %(times_brewed)s\nNumber of tea cups you were served -> %(teas_received)s" % result,
                     "short": False
                 },
             ]
@@ -118,11 +109,26 @@ def nominate(user, command_body=None):
         return post_message('You must nominate another user to brew!')
 
     nominated_user = UserManager.get_by_slack_id(slack_id)
+    if nominated_user.nomination_points < NOMINATION_POINTS_REQUIRED:
+        return post_message('You can\'t nominate someone unless you brew tea %s times!' % NOMINATION_POINTS_REQUIRED)
+
+    # Subtract nomination points from request user.
+    nominated_user.nomination_points -= NOMINATION_POINTS_REQUIRED
+
     session.add(Server(user_id=nominated_user.id))
     session.commit()
     brew_countdown.apply_async(countdown=BREW_COUNTDOWN)
 
     return post_message('%s has nominated %s to make tea! Who wants in?' % (user.first_name, nominated_user.first_name))
+
+
+def leaderboard():
+    leaderboard = session.query(User).filter(User.tea_type.isnot(None)).order_by(User.teas_brewed.desc()).all()
+    _message = '*Teabot Leaderboard*\n\n'
+    for index, user in enumerate(leaderboard):
+        _message += '%s. _%s_ has brewed *%s* cups of tea\n' % (index + 1, user.real_name, user.teas_brewed)
+
+    return post_message(_message)
 
 
 if __name__ == "__main__":
@@ -151,16 +157,19 @@ if __name__ == "__main__":
                         stats(command_body)
                     elif command == 'nominate':
                         nominate(request_user, command_body)
+                    elif command == 'leaderboard':
+                        leaderboard()
                     elif command == 'help':
                         post_message('''
 *TeaBot v%s Available Commands*
 
-1. _register_ -> Registers the tea preference of a user `@teabot register green tea`
-2. _brew_ -> Initiates the brewing process (users have %s seconds to respond) `@teabot brew`
-3. _me_ -> Reply with `@teabot me` when someone has offered to brew tea
-4. _nominate_ -> Nominate someone to make tea after brewing more than 20 times `@teabot nominate @george`
-5. _stats_ -> Get the stats for a user `@teabot stats` or `@teabot stats @george` for a single user
-                        ''' % (VERSION, BREW_COUNTDOWN))
+1. _register_ -> Registers the tea preference of a user (`@teabot register green tea`)
+2. _brew_ -> Initiates the brewing process (users have %s seconds to respond) (`@teabot brew`)
+3. _me_ -> Reply with `@teabot me` when someone has offered to brew
+4. _leaderboard_ -> Displays the current leaderboard based on tea cups brewed (`@teabot leaderboard`)
+5. _stats_ -> Displays the stats for all users (`@teabot stats`) or (`@teabot stats @george`) for a single user
+6. _nominate_ -> Nominate someone to brew tea. You must brew tea more than %s times to use this (`@teabot nominate @george`)
+                        ''' % (VERSION, BREW_COUNTDOWN, NOMINATION_POINTS_REQUIRED))
                     elif command == 'yo':
                         post_message('Sup?')
                     elif command == 'ping':

@@ -28,6 +28,19 @@ def brew_countdown():
     customers = session.query(Customer).filter_by(server_id=server.id)
     session.commit()
 
+    for customer in customers:
+        customer.user.teas_drunk += 1
+        customer.user.teas_received += 1
+        server.user.teas_brewed += 1
+
+    server.user.teas_brewed += 1  # Account for server's tea
+    server.user.teas_drunk += 1
+    server.user.times_brewed += 1
+
+    # There must be at least 1 customer to get a nomination point.
+    if len(customers):
+        server.user.nomination_points += 1
+
     if not customers.count():
         return post_message('Time is up! Looks like no one else wants a cuppa.')
 
@@ -71,3 +84,21 @@ def update_slack_users():
             ))
 
         session.commit()
+
+
+@celery.task
+def update_user_stats():
+    users = session.query(User).filter(User.tea_type.isnot(None)).all()
+
+    for user in users:
+        servers = session.query(Server).filter_by(user_id=user.id)
+        customers = session.query(Customer).filter_by(user_id=user.id)
+
+        user.teas_brewed = session.query(Customer).filter(
+            Customer.server_id.in_([server.id for server in servers])
+        ).count() + servers.count()
+        user.teas_drunk = servers.count() + customers.count()
+        user.teas_received = customers.count()
+        user.times_brewed = servers.count()
+
+    session.commit()

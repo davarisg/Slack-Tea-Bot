@@ -22,7 +22,12 @@ class User(Base):
     last_name = Column(String(255), nullable=True)
     deleted = Column(Boolean, default=False)
 
+    nomination_points = Column(Integer)
     tea_type = Column(String(1024))
+    teas_brewed = Column(Integer)
+    teas_drunk = Column(Integer)
+    teas_received = Column(Integer)
+    times_brewed = Column(Integer)
 
 
 class Server(Base):
