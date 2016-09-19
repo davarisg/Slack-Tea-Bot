@@ -9,7 +9,7 @@ class UserManager(object):
 
     @classmethod
     def get_by_username(cls, username):
-        return session.query(User).filter_by(slack_id=username).first()
+        return session.query(User).filter_by(username=username).first()
 
 
 class ServerManager(object):
