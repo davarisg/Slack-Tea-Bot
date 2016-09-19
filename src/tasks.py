@@ -15,7 +15,7 @@ celery.conf.update(
     CELERYBEAT_SCHEDULE={
         'update-slack-users': {
             'task': 'tasks.update_slack_users',
-            'schedule': crontab(hour='*')
+            'schedule': crontab(hour='*', minute=0)
         }
     },
 )
