@@ -7,7 +7,7 @@ SQLALCHEMY_ENGINE = 'sqlite:////tmp/test.db'
 CELERY_BROKER = 'redis://localhost:6379'
 CELERY_BACKEND = 'redis://localhost:6379'
 
-BREW_COUNTDOWN = 10
+BREW_COUNTDOWN = 120
 
 VERSION = '0.2'
 
