@@ -28,6 +28,15 @@ def brew_countdown():
     customers = session.query(Customer).filter_by(server_id=server.id)
     session.commit()
 
+    for customer in customers:
+        customer.user.teas_drunk += 1
+        customer.user.teas_received += 1
+        server.user.teas_brewed += 1
+
+    server.user.teas_brewed += 1  # Account for server's tea
+    server.user.teas_drunk += 1
+    server.user.times_brewed += 1
+
     if not customers.count():
         return post_message('Time is up! Looks like no one else wants a cuppa.')
 
