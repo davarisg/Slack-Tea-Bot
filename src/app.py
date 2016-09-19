@@ -34,6 +34,9 @@ def brew(user):
     if ServerManager.has_active_server():
         return post_message('Someone else is already making tea. Want in?')
 
+    user.teas_brewed += 1
+    user.teas_drunk += 1
+    user.times_brewed += 1
     session.add(Server(user_id=user.id))
     session.commit()
     brew_countdown.apply_async(countdown=BREW_COUNTDOWN)
@@ -51,6 +54,7 @@ def me(user):
     if session.query(Customer).filter_by(user_id=user.id, server_id=server.id).count():
         return post_message('You said it once already %s.' % user.real_name)
 
+    server.user.teas_brewed += 1
     session.add(Customer(user_id=user.id, server_id=server.id))
     session.commit()
     return post_message('Hang tight %s, tea is being served soon' % user.real_name)
@@ -74,21 +78,12 @@ def stats(command_body=None):
     results = []
 
     for user in users:
-        servers = session.query(Server).filter_by(user_id=user.id)
-        customers = session.query(Customer).filter_by(user_id=user.id)
-        number_of_teas_drunk = servers.count() + customers.count()
-        number_of_teas_brewed = session.query(Customer).filter(
-            Customer.server_id.in_([server.id for server in servers])
-        ).count() + servers.count()
-        number_of_times_brewed = servers.count()
-        number_of_teas_received = customers.count()
-
         results.append({
             'author_name': user.real_name,
-            'number_of_teas_drunk': number_of_teas_drunk,
-            'number_of_teas_brewed': number_of_teas_brewed,
-            'number_of_times_brewed': number_of_times_brewed,
-            'number_of_teas_received': number_of_teas_received
+            'teas_drunk': user.teas_drunk,
+            'teas_brewed': user.teas_brewed,
+            'times_brewed': user.times_brewed,
+            'teas_received': user.teas_received
         })
 
     return post_message('', attachments=[
@@ -98,7 +93,7 @@ def stats(command_body=None):
             "author_name": "%s" % result['author_name'],
             "fields": [
                 {
-                    "value": "Number of tea cups consumed -> %(number_of_teas_drunk)s\nNumber of tea cups brewed -> %(number_of_teas_brewed)s\nNumber of times you've brewed tea -> %(number_of_times_brewed)s\nNumber of tea cups you were served -> %(number_of_teas_received)s" % result,
+                    "value": "Number of tea cups consumed -> %(teas_drunk)s\nNumber of tea cups brewed -> %(teas_brewed)s\nNumber of times you've brewed tea -> %(times_brewed)s\nNumber of tea cups you were served -> %(teas_received)s" % result,
                     "short": False
                 },
             ]

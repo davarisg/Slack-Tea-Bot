@@ -71,3 +71,21 @@ def update_slack_users():
             ))
 
         session.commit()
+
+
+@celery.task
+def update_user_stats():
+    users = session.query(User).filter(User.tea_type.isnot(None)).all()
+
+    for user in users:
+        servers = session.query(Server).filter_by(user_id=user.id)
+        customers = session.query(Customer).filter_by(user_id=user.id)
+
+        user.teas_brewed = session.query(Customer).filter(
+            Customer.server_id.in_([server.id for server in servers])
+        ).count() + servers.count()
+        user.teas_drunk = servers.count() + customers.count()
+        user.teas_received = customers.count()
+        user.times_brewed = servers.count()
+
+    session.commit()

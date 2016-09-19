@@ -11,4 +11,4 @@ BREW_COUNTDOWN = 10
 
 VERSION = '0.1'
 
-CHANNEL = 'ocado'
+CHANNEL = 'general'
