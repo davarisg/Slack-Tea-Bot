@@ -43,11 +43,6 @@ class Dispatcher(object):
         self.teabot = teabot
         self.command_body = ''
         self.request_user = None
-        self._events = {
-            'brew': self.brew,
-            'help': self.help,
-            # 'leaderboard': se
-        }
 
     def dispatch(self, event):
         text = event[0].get('text', '')
@@ -70,7 +65,6 @@ class Dispatcher(object):
 
     @require_registration
     def brew(self):
-        print "YOOO"
         # Make sure the user is not brewing already
         if ServerManager.has_active_server():
             return post_message('Someone else is already making tea. Want in?')
