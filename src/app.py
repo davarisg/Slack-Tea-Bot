@@ -1,13 +1,14 @@
+from __future__ import absolute_import
 import random
 import re
 import time
 
-from conf import BREW_COUNTDOWN, NOMINATION_POINTS_REQUIRED, HELP_TEXT
-from managers import UserManager, ServerManager
-from models import Server, Customer, session, User
-from slack_client import sc
-from tasks import brew_countdown
-from utils import post_message
+from src.conf import BREW_COUNTDOWN, HELP_TEXT, NOMINATION_POINTS_REQUIRED
+from src.managers import UserManager, ServerManager
+from src.models import Server, Customer, session, User
+from src.slack_client import sc
+from src.tasks import brew_countdown
+from src.utils import post_message
 
 COMMAND_RE = re.compile(r'^<@([\w\d]+)> (register|brew|me|stats|leaderboard|nominate|yo|ping|help)?\s?(.*)$', flags=re.IGNORECASE)
 TEABOT_MENTION_RE = re.compile(r'<@([\w\d]+)>')

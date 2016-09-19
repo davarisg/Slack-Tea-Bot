@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import os
 
 SLACK_WEBHOOK_SECRET = os.environ.get('SLACK_WEBHOOK_SECRET')

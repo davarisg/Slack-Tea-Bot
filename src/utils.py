@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 from sqlalchemy.sql import ClauseElement
 
-from conf import CHANNEL
-from slack_client import sc
+from src.conf import CHANNEL
+from src.slack_client import sc
 
 
 def get_or_create(session, model, defaults=None, **kwargs):

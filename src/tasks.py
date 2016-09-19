@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 from celery import Celery
 from celery.schedules import crontab
 
-from conf import CELERY_BROKER, CELERY_BACKEND
-from models import Server, Customer, session, User
-from slack_client import sc
-from utils import post_message
+from src.conf import CELERY_BROKER, CELERY_BACKEND
+from src.models import Server, Customer, session, User
+from src.slack_client import sc
+from src.utils import post_message
 
 celery = Celery('app', broker=CELERY_BROKER, backend=CELERY_BACKEND)
 celery.conf.update(
