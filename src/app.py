@@ -120,7 +120,7 @@ def leaderboard():
     leaderboard = session.query(User).filter(User.tea_type.isnot(None)).order_by(User.teas_brewed.desc()).all()
     _message = '*Teabot Leaderboard*\n\n'
     for index, user in enumerate(leaderboard):
-        _message += '%s. _%s_ has brewed %s tea cups' % (index + 1, user.real_name, user.teas_brewed)
+        _message += '%s. _%s_ has brewed *%s* cups of tea\n' % (index + 1, user.real_name, user.teas_brewed)
 
     return post_message(_message)
 
