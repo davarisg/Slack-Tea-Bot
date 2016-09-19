@@ -10,7 +10,7 @@ from slack_client import sc
 from tasks import brew_countdown
 from utils import post_message
 
-COMMAND_RE = re.compile(r'^<@([\w\d]+)> (register|brew|me|stats|yo|ping|help)?\s?(.*)$', flags=re.IGNORECASE)
+COMMAND_RE = re.compile(r'^<@([\w\d]+)> (register|brew|me|stats|leaderboard|yo|ping|help)?\s?(.*)$', flags=re.IGNORECASE)
 TEABOT_MENTION_RE = re.compile(r'<@([\w\d]+)>')
 MENTION_RE = re.compile(r'^<@([\w\d]+)>$')
 
@@ -116,6 +116,14 @@ def nominate(user, command_body=None):
     return post_message('%s has nominated %s to make tea! Who wants in?' % (user.first_name, nominated_user.first_name))
 
 
+def leaderboard():
+    leaderboard = session.query(User).filter(User.tea_type.isnot(None)).order_by(User.teas_brewed.desc()).all()
+    _message = '*Teabot Leaderboard*\n\n'
+    for index, user in enumerate(leaderboard):
+        _message += '%s. _%s_ has brewed %s tea cups' % (index + 1, user.real_name, user.teas_brewed)
+
+    return post_message(_message)
+
 if __name__ == "__main__":
     if sc.rtm_connect():
         teabot = UserManager.get_by_username('teabot')
@@ -142,6 +150,8 @@ if __name__ == "__main__":
                         stats(command_body)
                     elif command == 'nominate':
                         nominate(request_user, command_body)
+                    elif command == 'leaderboard':
+                        leaderboard()
                     elif command == 'help':
                         post_message('''
 *TeaBot v%s Available Commands*
@@ -149,9 +159,10 @@ if __name__ == "__main__":
 1. _register_ -> Registers the tea preference of a user `@teabot register green tea`
 2. _brew_ -> Initiates the brewing process (users have %s seconds to respond) `@teabot brew`
 3. _me_ -> Reply with `@teabot me` when someone has offered to brew tea
-4. _nominate_ -> Nominate someone to make tea after brewing more than 20 times `@teabot nominate @george`
+4. _leaderboard_ -> Who has brewed the most cup of teas? `@teabot leaderboard`
 5. _stats_ -> Get the stats for a user `@teabot stats` or `@teabot stats @george` for a single user
                         ''' % (VERSION, BREW_COUNTDOWN))
+                        # 4. _nominate_ -> Nominate someone to make tea after brewing more than 20 times `@teabot nominate @george`
                     elif command == 'yo':
                         post_message('Sup?')
                     elif command == 'ping':
