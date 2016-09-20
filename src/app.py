@@ -46,7 +46,6 @@ class Dispatcher(object):
 
     def dispatch(self, event):
         text = event[0].get('text', '')
-        request_slack_user_id = event[0].get('user', '')
         try:
             slack_user_id, command, command_body = COMMAND_RE.search(text).groups()
             if slack_user_id != self.teabot.slack_id:
@@ -54,7 +53,9 @@ class Dispatcher(object):
 
             command = command.strip()
             self.command_body = command_body.strip()
-            self.request_user = UserManager.get_by_slack_id(request_slack_user_id)
+            self.request_user = UserManager.get_by_slack_id(event[0].get('user', ''))
+            if not self.request_user:
+                return
 
             # Call the appropriate function
             getattr(self, command)()
