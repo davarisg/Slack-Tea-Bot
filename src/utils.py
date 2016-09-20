@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from sqlalchemy.sql import ClauseElement
 
-from src.conf import CHANNEL
 from src.slack_client import sc
 
 
@@ -17,7 +16,7 @@ def get_or_create(session, model, defaults=None, **kwargs):
         return instance, True
 
 
-def post_message(text, channel=CHANNEL, attachments=None, mrkdwn=False):
+def post_message(text, channel, attachments=None, mrkdwn=False):
     sc.api_call(
         'chat.postMessage',
         channel=channel,

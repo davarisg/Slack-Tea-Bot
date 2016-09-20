@@ -23,7 +23,7 @@ celery.conf.update(
 
 
 @celery.task
-def brew_countdown():
+def brew_countdown(channel):
     server = session.query(Server).filter_by(completed=False).first()
     server.completed = True
     customers = session.query(Customer).filter_by(server_id=server.id)
@@ -38,17 +38,16 @@ def brew_countdown():
     server.user.teas_drunk += 1
     server.user.times_brewed += 1
 
-    # There must be at least 1 customer to get a nomination point.
-    if customers.count():
-        server.user.nomination_points += 1
-
     if not customers.count():
-        return post_message('Time is up! Looks like no one else wants a cuppa.')
+        return post_message('Time is up! Looks like no one else wants a cuppa.', channel)
+
+    # There must be at least 1 customer to get a nomination point.
+    server.user.nomination_points += 1
 
     return post_message("\n".join(
         ['Time is up!'] +
         ['%s wants %s' % (customer.user.real_name, customer.user.tea_type) for customer in customers]
-    ))
+    ), channel)
 
 
 @celery.task

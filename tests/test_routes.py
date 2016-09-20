@@ -23,26 +23,41 @@ class DispatcherTestCase(BaseTestCase):
     def test_register(self):
         unregistered_user = self._create_user(first_name='George')
         self.assertIsNone(unregistered_user.tea_type)
-        self.dispatcher.dispatch([{'text': '<@U123456> register peppermint tea', 'user': unregistered_user.slack_id}])
+        self.dispatcher.dispatch([{
+            'channel': 'tearoom',
+            'text': '<@U123456> register peppermint tea',
+            'user': unregistered_user.slack_id
+        }])
 
         session.refresh(unregistered_user)
         self.assertEqual(unregistered_user.tea_type, 'peppermint tea')
-        self.mock_post_message.assert_called_with('Welcome to the tea party George')
+        self.mock_post_message.assert_called_with('Welcome to the tea party George', 'tearoom')
 
     def test_register_without_tea_type(self):
         unregistered_user = self._create_user(first_name='George')
         self.assertIsNone(unregistered_user.tea_type)
-        self.dispatcher.dispatch([{'text': '<@U123456> register', 'user': unregistered_user.slack_id}])
+        self.dispatcher.dispatch([{
+            'channel': 'tearoom',
+            'text': '<@U123456> register',
+            'user': unregistered_user.slack_id
+        }])
 
         session.refresh(unregistered_user)
         self.assertIsNone(unregistered_user.tea_type)
-        self.mock_post_message.assert_called_with('You didn\'t tell me what type of tea you like. Try typing `@teabot register green tea`')
+        self.mock_post_message.assert_called_with(
+            'You didn\'t tell me what type of tea you like. Try typing `@teabot register green tea`',
+            'tearoom'
+        )
 
     def test_register_update_tea_type(self):
         unregistered_user = self._create_user(first_name='George', tea_type='green tea')
         self.assertEqual(unregistered_user.tea_type, 'green tea')
-        self.dispatcher.dispatch([{'text': '<@U123456> register peppermint tea', 'user': unregistered_user.slack_id}])
+        self.dispatcher.dispatch([{
+            'channel': 'tearoom',
+            'text': '<@U123456> register peppermint tea',
+            'user': unregistered_user.slack_id
+        }])
 
         session.refresh(unregistered_user)
         self.assertEqual(unregistered_user.tea_type, 'peppermint tea')
-        self.mock_post_message.assert_called_with('I have updated your tea preference.')
+        self.mock_post_message.assert_called_with('I have updated your tea preference.', 'tearoom')
