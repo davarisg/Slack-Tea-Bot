@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from src.models import session, User, Server, Customer
+from models import session, User, Server, Customer
 
 
 class UserManager(object):

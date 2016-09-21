@@ -1,11 +1,10 @@
-from __future__ import absolute_import
 from celery import Celery
 from celery.schedules import crontab
 
-from src.conf import CELERY_BROKER, CELERY_BACKEND
-from src.models import Server, Customer, session, User
-from src.slack_client import sc
-from src.utils import post_message
+from conf import CELERY_BROKER, CELERY_BACKEND
+from models import Server, Customer, session, User
+from slack_client import sc
+from utils import post_message
 
 celery = Celery('app', broker=CELERY_BROKER, backend=CELERY_BACKEND)
 celery.conf.update(
@@ -15,7 +14,7 @@ celery.conf.update(
     CELERY_TIMEZONE='UTC',
     CELERYBEAT_SCHEDULE={
         'update-slack-users': {
-            'task': 'src.tasks.update_slack_users',
+            'task': 'tasks.update_slack_users',
             'schedule': crontab(hour='*', minute=0)
         }
     },

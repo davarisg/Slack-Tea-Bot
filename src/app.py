@@ -1,14 +1,13 @@
-from __future__ import absolute_import
 import random
 import re
 import time
 
-from src.conf import BREW_COUNTDOWN, HELP_TEXT, NOMINATION_POINTS_REQUIRED
-from src.managers import UserManager, ServerManager
-from src.models import Server, Customer, session, User
-from src.slack_client import sc
-from src.tasks import brew_countdown
-from src.utils import post_message
+from conf import BREW_COUNTDOWN, HELP_TEXT, NOMINATION_POINTS_REQUIRED
+from managers import UserManager, ServerManager
+from models import Server, Customer, session, User
+from slack_client import sc
+from tasks import brew_countdown
+from utils import post_message
 
 COMMAND_RE = re.compile(r'^<@([\w\d]+)>:? (register|brew|me|stats|leaderboard|nominate|yo|ping|help)\s?(.*)?$', flags=re.IGNORECASE)
 TEABOT_MENTION_RE = re.compile(r'<@([\w\d]+)>')
@@ -97,6 +96,7 @@ class Dispatcher(object):
 
         server = server.first()
 
+        # TODO: Do not let server say me
         if session.query(Customer).filter_by(user_id=self.request_user.id, server_id=server.id).count():
             return post_message('You said it once already %s.' % self.request_user.first_name, self.channel)
 

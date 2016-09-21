@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-
 from mock import patch
 
-from src.models import session, Server
+from src.models import session
 from src.tasks import brew_countdown
 from tests.utils import BaseTestCase
 
