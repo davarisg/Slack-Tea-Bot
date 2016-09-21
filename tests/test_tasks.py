@@ -10,7 +10,6 @@ from tests.utils import BaseTestCase
 class TasksTestCase(BaseTestCase):
     def setUp(self):
         super(TasksTestCase, self).setUp()
-        self.tea_bot = self._create_user(slack_id='U123456', username='teabot')
         self.user = self._create_user(tea_type='green tea')
 
         self.patcher = patch('src.tasks.post_message')
