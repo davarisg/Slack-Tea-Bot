@@ -25,9 +25,11 @@ celery.conf.update(
 @celery.task
 def brew_countdown(channel):
     server = session.query(Server).filter_by(completed=False).first()
+    if not server:
+        return
+
     server.completed = True
     customers = session.query(Customer).filter_by(server_id=server.id)
-    session.commit()
 
     for customer in customers.all():
         customer.user.teas_drunk += 1
@@ -39,14 +41,16 @@ def brew_countdown(channel):
     server.user.times_brewed += 1
 
     if not customers.count():
+        session.commit()
         return post_message('Time is up! Looks like no one else wants a cuppa.', channel)
 
     # There must be at least 1 customer to get a nomination point.
     server.user.nomination_points += 1
+    session.commit()
 
     return post_message("\n".join(
         ['Time is up!'] +
-        ['%s wants %s' % (customer.user.real_name, customer.user.tea_type) for customer in customers]
+        ['%s wants %s' % (customer.user.first_name, customer.user.tea_type) for customer in customers]
     ), channel)
 
 
@@ -84,21 +88,3 @@ def update_slack_users():
             ))
 
         session.commit()
-
-
-@celery.task
-def update_user_stats():
-    users = session.query(User).filter(User.tea_type.isnot(None)).all()
-
-    for user in users:
-        servers = session.query(Server).filter_by(user_id=user.id)
-        customers = session.query(Customer).filter_by(user_id=user.id)
-
-        user.teas_brewed = session.query(Customer).filter(
-            Customer.server_id.in_([server.id for server in servers])
-        ).count() + servers.count()
-        user.teas_drunk = servers.count() + customers.count()
-        user.teas_received = customers.count()
-        user.times_brewed = servers.count()
-
-    session.commit()

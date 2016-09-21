@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from src.models import session, User, Server
+from src.models import session, User, Server, Customer
 
 
 class UserManager(object):
@@ -16,3 +16,9 @@ class ServerManager(object):
     @classmethod
     def has_active_server(cls):
         return bool(session.query(Server).filter_by(completed=False).count())
+
+
+class CustomerManager(object):
+    @classmethod
+    def get_for_user_server(cls, user_id, server_id):
+        return session.query(Customer).filter_by(user_id=user_id, server_id=server_id).first()

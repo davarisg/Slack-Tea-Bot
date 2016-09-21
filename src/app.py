@@ -107,7 +107,10 @@ class Dispatcher(object):
     @require_registration
     def nominate(self):
         if ServerManager.has_active_server():
-            return post_message('Someone else is already making tea, I\'ll save your nomination for later :smile:', self.channel)
+            return post_message(
+                'Someone else is already making tea, I\'ll save your nomination for later :smile:',
+                self.channel
+            )
 
         try:
             slack_id = MENTION_RE.search(self.command_body).groups()[0]
@@ -115,13 +118,19 @@ class Dispatcher(object):
             return post_message('You must nominate another user to brew!', self.channel)
 
         nominated_user = UserManager.get_by_slack_id(slack_id)
-        if nominated_user.nomination_points < NOMINATION_POINTS_REQUIRED:
-            return post_message('You can\'t nominate someone unless you brew tea %s times!' % NOMINATION_POINTS_REQUIRED, self.channel)
+        if self.request_user.nomination_points < NOMINATION_POINTS_REQUIRED:
+            return post_message(
+                'You can\'t nominate someone unless you brew tea %s times!' % NOMINATION_POINTS_REQUIRED,
+                self.channel
+            )
 
         # Subtract nomination points from request user.
         nominated_user.nomination_points -= NOMINATION_POINTS_REQUIRED
 
-        session.add(Server(user_id=nominated_user.id))
+        server = Server(user_id=nominated_user.id)
+        session.add(server)
+        session.flush()
+        session.add(Customer(user_id=self.request_user.id, server_id=server.id))
         session.commit()
         brew_countdown.apply_async(countdown=BREW_COUNTDOWN, args=(self.channel,))
 
@@ -144,7 +153,7 @@ class Dispatcher(object):
             slack_id = None
 
         if slack_id:
-            users = UserManager.get_by_slack_id(slack_id)
+            users = [UserManager.get_by_slack_id(slack_id)]
         else:
             users = session.query(User).filter(User.tea_type.isnot(None)).all()
 
@@ -152,7 +161,7 @@ class Dispatcher(object):
 
         for user in users:
             results.append({
-                'author_name': user.real_name,
+                'real_name': user.real_name,
                 'teas_drunk': user.teas_drunk,
                 'teas_brewed': user.teas_brewed,
                 'times_brewed': user.times_brewed,
@@ -163,7 +172,7 @@ class Dispatcher(object):
             {
                 "fallback": "Teabot Stats",
                 "pretext": "",
-                "author_name": "%s" % result['author_name'],
+                "author_name": "%s" % result['real_name'],
                 "fields": [
                     {
                         "value": "Number of tea cups consumed -> %(teas_drunk)s\nNumber of tea cups brewed -> %(teas_brewed)s\nNumber of times you've brewed tea -> %(times_brewed)s\nNumber of tea cups you were served -> %(teas_received)s" % result,
