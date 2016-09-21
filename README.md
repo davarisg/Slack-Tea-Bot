@@ -1,3 +1,5 @@
+[![Codeship status for Slack-Tea-Bot](https://codeship.com/projects/730b8b40-6278-0134-e9e6-0ae4dffb78c7/status?branch=master)](https://codeship.com/projects/175112)
+
 # Slack Tea Bot
 
 A tea bot for Slack.
