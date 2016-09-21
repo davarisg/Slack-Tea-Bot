@@ -70,7 +70,8 @@ class DispatcherTestCase(BaseTestCase):
             self.assertTrue(ServerManager.has_active_server())
 
     def test_me(self):
-        server = self._create_server(self.registered_user.id)
+        user = self._create_user(tea_type='mint tea')
+        server = self._create_server(user.id)
         self.assertIsNone(CustomerManager.get_for_user_server(self.registered_user.id, server.id))
         self.dispatcher.dispatch([{
             'channel': 'tearoom',
@@ -103,6 +104,20 @@ class DispatcherTestCase(BaseTestCase):
             'tearoom'
         )
         self.assertEqual(session.query(Customer).filter_by(user_id=self.registered_user.id).count(), 0)
+
+    def test_me_as_server(self):
+        server = self._create_server(self.registered_user.id)
+        self.assertIsNone(CustomerManager.get_for_user_server(self.registered_user.id, server.id))
+        self.dispatcher.dispatch([{
+            'channel': 'tearoom',
+            'text': '<@U123456> me',
+            'user': self.registered_user.slack_id
+        }])
+        self.mock_post_message.assert_called_with(
+            '%s you are making tea! :face_with_rolling_eyes:' % self.registered_user.first_name,
+            'tearoom'
+        )
+        self.assertIsNone(CustomerManager.get_for_user_server(self.registered_user.id, server.id))
 
     def test_nominate(self):
         self.registered_user.nomination_points = NOMINATION_POINTS_REQUIRED
@@ -171,24 +186,17 @@ class DispatcherTestCase(BaseTestCase):
             mock_brew_countdown.apply_async.assert_not_called()
 
     def test_nominate_unregistered(self):
-        self.registered_user1 = self._create_user(tea_type='abc')
-        session.flush()
-        session.commit()
-
         self.assertFalse(ServerManager.has_active_server())
         with patch('src.app.brew_countdown') as mock_brew_countdown:
             self.dispatcher.dispatch([{
                 'channel': 'tearoom',
-                'text': '<@U123456> nominate <@%s>' % self.registered_user1.slack_id,
-                'user': self.registered_user.slack_id
+                'text': '<@U123456> nominate <@%s>' % self.registered_user.slack_id,
+                'user': self.unregistered_user.slack_id
             }])
-            self.mock_post_message.assert_any_call(
-                'You can\'t nominate someone unless you brew tea %s times!' % NOMINATION_POINTS_REQUIRED,
-                'tearoom'
-            )
+            self.mock_post_message.assert_called_with('You need to register first.', 'tearoom')
             self.assertEqual(
                 session.query(Server).filter_by(
-                    user_id=self.registered_user1.id,
+                    user_id=self.unregistered_user.id,
                     completed=False
                 ).count(),
                 0

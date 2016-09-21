@@ -96,7 +96,11 @@ class Dispatcher(object):
 
         server = server.first()
 
-        # TODO: Do not let server say me
+        if server.user_id == self.request_user.id:
+            return post_message(
+                '%s you are making tea! :face_with_rolling_eyes:' % self.request_user.first_name, self.channel
+            )
+
         if session.query(Customer).filter_by(user_id=self.request_user.id, server_id=server.id).count():
             return post_message('You said it once already %s.' % self.request_user.first_name, self.channel)
 
