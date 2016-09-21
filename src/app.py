@@ -10,7 +10,7 @@ from src.slack_client import sc
 from src.tasks import brew_countdown
 from src.utils import post_message
 
-COMMAND_RE = re.compile(r'^<@([\w\d]+)> (register|brew|me|stats|leaderboard|nominate|yo|ping|help)?\s?(.*)$', flags=re.IGNORECASE)
+COMMAND_RE = re.compile(r'^<@([\w\d]+)>:? (register|brew|me|stats|leaderboard|nominate|yo|ping|help)\s?(.*)?$', flags=re.IGNORECASE)
 TEABOT_MENTION_RE = re.compile(r'<@([\w\d]+)>')
 MENTION_RE = re.compile(r'^<@([\w\d]+)>$')
 

@@ -24,6 +24,21 @@ class DispatcherTestCase(BaseTestCase):
         super(DispatcherTestCase, self).tearDown()
         self.patcher.stop()
 
+    def test_command_with_column(self):
+        self.dispatcher.dispatch([{
+            'channel': 'tearoom',
+            'text': '<@U123456> ping',
+            'user': self.registered_user.slack_id
+        }])
+        self.mock_post_message.assert_called_with('pong', 'tearoom')
+
+        self.dispatcher.dispatch([{
+            'channel': 'tearoom',
+            'text': '<@U123456>: ping',
+            'user': self.registered_user.slack_id
+        }])
+        self.mock_post_message.assert_called_with('pong', 'tearoom')
+
     def test_brew_unregistered(self):
         self.dispatcher.dispatch([{
             'channel': 'tearoom',
