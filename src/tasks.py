@@ -15,7 +15,7 @@ celery.conf.update(
     CELERY_TIMEZONE='UTC',
     CELERYBEAT_SCHEDULE={
         'update-slack-users': {
-            'task': 'tasks.update_slack_users',
+            'task': 'src.tasks.update_slack_users',
             'schedule': crontab(hour='*', minute=0)
         }
     },
@@ -59,7 +59,11 @@ def update_slack_users():
     """
     Periodic task to update slack user info
     """
-    for member in sc.api_call('users.list')['members']:
+    slack_users = sc.api_call('users.list')
+    if not slack_users['ok']:
+        return
+
+    for member in slack_users['members']:
         slack_id = member.get('id')
         username = member.get('name')
         email = member.get('profile').get('email', '')
