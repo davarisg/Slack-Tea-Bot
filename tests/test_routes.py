@@ -378,3 +378,20 @@ class DispatcherTestCase(BaseTestCase):
         session.refresh(self.registered_user)
         self.assertEqual(self.registered_user.tea_type, 'peppermint tea')
         self.mock_post_message.assert_called_with('I have updated your tea preference.', 'tearoom')
+
+    def test_did_not_understand(self):
+        self.dispatcher.dispatch([{
+            'channel': 'tearoom',
+            'text': '<@U123456> unknown command',
+            'user': self.registered_user.slack_id
+        }])
+
+        self.mock_post_message.assert_called_with('I did not understand that. Try `@teabot help`', 'tearoom')
+
+        self.dispatcher.dispatch([{
+            'channel': 'tearoom',
+            'text': 'hey <@U123456>',
+            'user': self.registered_user.slack_id
+        }])
+
+        self.mock_post_message.assert_called_with('I did not understand that. Try `@teabot help`', 'tearoom')

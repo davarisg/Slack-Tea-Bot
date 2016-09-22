@@ -9,9 +9,12 @@ from slack_client import sc
 from tasks import brew_countdown
 from utils import post_message
 
-COMMAND_RE = re.compile(r'^<@([\w\d]+)>:? (register|brew|me|stats|leaderboard|nominate|yo|ping|help)\s?(.*)?$', flags=re.IGNORECASE)
-TEABOT_MENTION_RE = re.compile(r'<@([\w\d]+)>')
+COMMAND_RE = re.compile(
+    r'^<@([\w\d]+)>:? (register|brew|me|stats|leaderboard|nominate|yo|ping|help)\s?(.*)?$',
+    flags=re.IGNORECASE
+)
 MENTION_RE = re.compile(r'^<@([\w\d]+)>$')
+MENTION_ANYWHERE_RE = re.compile(r'<@([\w\d]+)>')
 
 
 # Decorator
@@ -62,9 +65,9 @@ class Dispatcher(object):
             # Call the appropriate function
             getattr(self, command)()
         except AttributeError:
-            regex = TEABOT_MENTION_RE.search(text)
+            regex = MENTION_ANYWHERE_RE.search(text)
             if regex and regex.groups()[0] == self.teabot.slack_id:
-                post_message('No idea what that means mate.',  self.channel)
+                post_message('I did not understand that. Try `@teabot help`',  self.channel)
 
     @require_registration
     def brew(self):
