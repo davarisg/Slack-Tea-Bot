@@ -2,7 +2,7 @@ import random
 import re
 import time
 
-from conf import BREW_COUNTDOWN, HELP_TEXT, NOMINATION_POINTS_REQUIRED
+from conf import HELP_TEXT, NOMINATION_POINTS_REQUIRED
 from managers import UserManager, ServerManager
 from models import Server, Customer, session, User
 from slack_client import sc
@@ -77,7 +77,7 @@ class Dispatcher(object):
 
         session.add(Server(user_id=self.request_user.id))
         session.commit()
-        brew_countdown.apply_async(countdown=BREW_COUNTDOWN, args=(self.channel,))
+        brew_countdown(self.channel)
         return post_message(random.choice(['%s is making tea, who is in?' % self.request_user.first_name, 'Who wants a cuppa?']),  self.channel)
 
     def help(self):
@@ -139,7 +139,7 @@ class Dispatcher(object):
         session.flush()
         session.add(Customer(user_id=self.request_user.id, server_id=server.id))
         session.commit()
-        brew_countdown.apply_async(countdown=BREW_COUNTDOWN, args=(self.channel,))
+        brew_countdown(self.channel)
 
         return post_message('%s has nominated %s to make tea! Who wants in?' % (
             self.request_user.first_name,

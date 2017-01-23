@@ -53,7 +53,7 @@ class DispatcherTestCase(BaseTestCase):
                 'text': '<@U123456> brew',
                 'user': self.registered_user.slack_id
             }])
-            mock_brew_countdown.apply_async.assert_called_with(countdown=BREW_COUNTDOWN, args=('tearoom',))
+            mock_brew_countdown.assert_called_with('tearoom')
             self.assertTrue(ServerManager.has_active_server())
 
     def test_brew_with_active_server(self):
@@ -152,7 +152,7 @@ class DispatcherTestCase(BaseTestCase):
                 ).count(),
                 1
             )
-            mock_brew_countdown.apply_async.assert_called_with(countdown=BREW_COUNTDOWN, args=('tearoom',))
+            mock_brew_countdown.assert_called_with('tearoom')
 
     def test_nominate_not_enough_points(self):
         self.registered_user1 = self._create_user(tea_type='abc')

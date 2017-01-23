@@ -10,8 +10,10 @@ class TasksTestCase(BaseTestCase):
         super(TasksTestCase, self).setUp()
         self.user = self._create_user(tea_type='green tea')
 
-        self.patcher = patch('src.tasks.post_message')
-        self.mock_post_message = self.patcher.start()
+        self.brew_countdown_patcher = patch('src.tasks.time.sleep')
+        self.brew_countdown_patcher.start()
+        self.post_message_patcher = patch('src.tasks.post_message')
+        self.mock_post_message = self.post_message_patcher.start()
 
     def test_brew_countdown_without_customers(self):
         server = self._create_server(self.user.id)
@@ -53,4 +55,5 @@ class TasksTestCase(BaseTestCase):
 
     def tearDown(self):
         super(TasksTestCase, self).tearDown()
-        self.patcher.stop()
+        self.brew_countdown_patcher.stop()
+        self.post_message_patcher.stop()
