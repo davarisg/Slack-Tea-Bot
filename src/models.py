@@ -9,7 +9,10 @@ Base = declarative_base()
 
 session_factory = sessionmaker(bind=engine)
 Session = scoped_session(session_factory)
-session = Session()
+
+
+def get_session():
+    return Session()
 
 
 class User(Base):

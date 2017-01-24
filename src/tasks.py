@@ -4,7 +4,7 @@ from functools import wraps
 from threading import Thread
 
 from conf import BREW_COUNTDOWN
-from models import Server, Customer, session, User
+from models import Server, Customer, get_session, User
 from slack_client import sc
 from utils import post_message
 
@@ -25,6 +25,8 @@ def brew_countdown(channel):
 
 @delay(BREW_COUNTDOWN)
 def _brew_countdown(channel):
+    session = get_session()
+
     server = session.query(Server).filter_by(completed=False).first()
     if not server:
         return
@@ -59,6 +61,7 @@ def update_slack_users():
     """
     Periodic task to update slack user info
     """
+    session = get_session()
     slack_users = sc.api_call('users.list')
     if not slack_users['ok']:
         return

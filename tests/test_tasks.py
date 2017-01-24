@@ -1,7 +1,6 @@
 from mock import patch
 
-from src.models import session
-from src.tasks import brew_countdown
+from src.tasks import _brew_countdown
 from tests.utils import BaseTestCase
 
 
@@ -19,8 +18,8 @@ class TasksTestCase(BaseTestCase):
         server = self._create_server(self.user.id)
         self.assertFalse(server.completed)
 
-        brew_countdown('tearoom')
-        session.refresh(server)
+        _brew_countdown('tearoom')
+        self.session.refresh(server)
         self.assertTrue(server.completed)
         self.assertEqual(self.user.teas_drunk, 1)
         self.assertEqual(self.user.teas_received, 0)
@@ -35,8 +34,8 @@ class TasksTestCase(BaseTestCase):
         self._create_customer(user1.id, server.id)
         self.assertFalse(server.completed)
 
-        brew_countdown('tearoom')
-        session.refresh(server)
+        _brew_countdown('tearoom')
+        self.session.refresh(server)
         self.assertTrue(server.completed)
         self.assertEqual(self.user.teas_drunk, 1)
         self.assertEqual(self.user.teas_received, 0)
