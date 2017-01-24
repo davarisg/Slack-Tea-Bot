@@ -23,10 +23,8 @@ A tea bot for Slack.
 * Go to Slack's App & Integrations > Manage > Custom Integrations and add a new Bot called teabot.
 * Create a virtualenv and load it.
 * On the repository's root type `pip install -r requirements.txt`.
-* Install Redis server and start it. Celery tries to connect to `redis://localhost:6379`. You can configure that in [conf.py](src/conf.py).
 * Export your slack secret key `export SLACK_WEBHOOK_SECRET="mysecretslackkey"`.
 * Initialize the database `python init_db.py`. You can configure the path to the sqlite DB in [conf.py](src/conf.py).
-* Start the celery workers `cd src && celery -A tasks worker -B`.
 * Start the app `python src/app.py`.
 
 
