@@ -1,9 +1,9 @@
 from mock import patch
 
 from src.app import Dispatcher
-from src.conf import BREW_COUNTDOWN, NOMINATION_POINTS_REQUIRED
+from src.conf import NOMINATION_POINTS_REQUIRED
 from src.managers import ServerManager, CustomerManager
-from src.models import session, Customer, Server
+from src.models import Customer, Server
 from tests.utils import BaseTestCase
 
 
@@ -53,7 +53,7 @@ class DispatcherTestCase(BaseTestCase):
                 'text': '<@U123456> brew',
                 'user': self.registered_user.slack_id
             }])
-            mock_brew_countdown.apply_async.assert_called_with(countdown=BREW_COUNTDOWN, args=('tearoom',))
+            mock_brew_countdown.assert_called_with('tearoom')
             self.assertTrue(ServerManager.has_active_server())
 
     def test_brew_with_active_server(self):
@@ -93,7 +93,7 @@ class DispatcherTestCase(BaseTestCase):
         self.mock_post_message.assert_called_with('You need to register first.', 'tearoom')
 
     def test_me_without_server(self):
-        self.assertEqual(session.query(Customer).filter_by(user_id=self.registered_user.id).count(), 0)
+        self.assertEqual(self.session.query(Customer).filter_by(user_id=self.registered_user.id).count(), 0)
         self.dispatcher.dispatch([{
             'channel': 'tearoom',
             'text': '<@U123456> me',
@@ -103,7 +103,7 @@ class DispatcherTestCase(BaseTestCase):
             'No one has volunteered to make tea, why dont you make it %s?' % self.registered_user.first_name,
             'tearoom'
         )
-        self.assertEqual(session.query(Customer).filter_by(user_id=self.registered_user.id).count(), 0)
+        self.assertEqual(self.session.query(Customer).filter_by(user_id=self.registered_user.id).count(), 0)
 
     def test_me_as_server(self):
         server = self._create_server(self.registered_user.id)
@@ -122,8 +122,8 @@ class DispatcherTestCase(BaseTestCase):
     def test_nominate(self):
         self.registered_user.nomination_points = NOMINATION_POINTS_REQUIRED
         self.registered_user1 = self._create_user(tea_type='abc')
-        session.flush()
-        session.commit()
+        self.session.flush()
+        self.session.commit()
 
         self.assertFalse(ServerManager.has_active_server())
         with patch('src.app.brew_countdown') as mock_brew_countdown:
@@ -140,24 +140,24 @@ class DispatcherTestCase(BaseTestCase):
                 'tearoom'
             )
             self.assertEqual(
-                session.query(Server).filter_by(
+                self.session.query(Server).filter_by(
                     user_id=self.registered_user1.id,
                     completed=False
                 ).count(),
                 1
             )
             self.assertEqual(
-                session.query(Customer).filter_by(
+                self.session.query(Customer).filter_by(
                     user_id=self.registered_user.id
                 ).count(),
                 1
             )
-            mock_brew_countdown.apply_async.assert_called_with(countdown=BREW_COUNTDOWN, args=('tearoom',))
+            mock_brew_countdown.assert_called_with('tearoom')
 
     def test_nominate_not_enough_points(self):
         self.registered_user1 = self._create_user(tea_type='abc')
-        session.flush()
-        session.commit()
+        self.session.flush()
+        self.session.commit()
 
         self.assertFalse(ServerManager.has_active_server())
         with patch('src.app.brew_countdown') as mock_brew_countdown:
@@ -171,14 +171,14 @@ class DispatcherTestCase(BaseTestCase):
                 'tearoom'
             )
             self.assertEqual(
-                session.query(Server).filter_by(
+                self.session.query(Server).filter_by(
                     user_id=self.registered_user1.id,
                     completed=False
                 ).count(),
                 0
             )
             self.assertEqual(
-                session.query(Customer).filter_by(
+                self.session.query(Customer).filter_by(
                     user_id=self.registered_user.id
                 ).count(),
                 0
@@ -195,14 +195,14 @@ class DispatcherTestCase(BaseTestCase):
             }])
             self.mock_post_message.assert_called_with('You need to register first.', 'tearoom')
             self.assertEqual(
-                session.query(Server).filter_by(
+                self.session.query(Server).filter_by(
                     user_id=self.unregistered_user.id,
                     completed=False
                 ).count(),
                 0
             )
             self.assertEqual(
-                session.query(Customer).filter_by(
+                self.session.query(Customer).filter_by(
                     user_id=self.registered_user.id
                 ).count(),
                 0
@@ -225,14 +225,14 @@ class DispatcherTestCase(BaseTestCase):
                 'tearoom'
             )
             self.assertEqual(
-                session.query(Server).filter_by(
+                self.session.query(Server).filter_by(
                     user_id=self.registered_user.id,
                     completed=False
                 ).count(),
                 1
             )
             self.assertEqual(
-                session.query(Customer).filter_by(
+                self.session.query(Customer).filter_by(
                     user_id=self.registered_user1.id
                 ).count(),
                 0
@@ -251,14 +251,14 @@ class DispatcherTestCase(BaseTestCase):
             }])
             self.mock_post_message.assert_any_call('You must nominate another user to brew!', 'tearoom')
             self.assertEqual(
-                session.query(Server).filter_by(
+                self.session.query(Server).filter_by(
                     user_id=self.registered_user1.id,
                     completed=False
                 ).count(),
                 0
             )
             self.assertEqual(
-                session.query(Customer).filter_by(
+                self.session.query(Customer).filter_by(
                     user_id=self.registered_user.id
                 ).count(),
                 0
@@ -348,7 +348,7 @@ class DispatcherTestCase(BaseTestCase):
             'user': self.unregistered_user.slack_id
         }])
 
-        session.refresh(self.unregistered_user)
+        self.session.refresh(self.unregistered_user)
         self.assertEqual(self.unregistered_user.tea_type, 'peppermint tea')
         self.mock_post_message.assert_called_with('Welcome to the tea party George', 'tearoom')
 
@@ -360,7 +360,7 @@ class DispatcherTestCase(BaseTestCase):
             'user': self.unregistered_user.slack_id
         }])
 
-        session.refresh(self.unregistered_user)
+        self.session.refresh(self.unregistered_user)
         self.assertIsNone(self.unregistered_user.tea_type)
         self.mock_post_message.assert_called_with(
             'You didn\'t tell me what type of tea you like. Try typing `@teabot register green tea`',
@@ -375,7 +375,7 @@ class DispatcherTestCase(BaseTestCase):
             'user': self.registered_user.slack_id
         }])
 
-        session.refresh(self.registered_user)
+        self.session.refresh(self.registered_user)
         self.assertEqual(self.registered_user.tea_type, 'peppermint tea')
         self.mock_post_message.assert_called_with('I have updated your tea preference.', 'tearoom')
 

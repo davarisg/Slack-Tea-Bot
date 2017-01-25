@@ -1,28 +1,32 @@
-from celery import Celery
-from celery.schedules import crontab
+import time
 
-from conf import CELERY_BROKER, CELERY_BACKEND
-from models import Server, Customer, session, User
+from functools import wraps
+from threading import Thread
+
+from conf import BREW_COUNTDOWN
+from models import Server, Customer, get_session, User
 from slack_client import sc
 from utils import post_message
 
-celery = Celery('app', broker=CELERY_BROKER, backend=CELERY_BACKEND)
-celery.conf.update(
-    CELERY_TASK_SERIALIZER='json',
-    CELERY_ACCEPT_CONTENT=['json'],
-    CELERY_RESULT_SERIALIZER='json',
-    CELERY_TIMEZONE='UTC',
-    CELERYBEAT_SCHEDULE={
-        'update-slack-users': {
-            'task': 'tasks.update_slack_users',
-            'schedule': crontab(hour='*', minute=0)
-        }
-    },
-)
+
+def delay(seconds):
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            time.sleep(seconds)
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
-@celery.task
 def brew_countdown(channel):
+    Thread(target=_brew_countdown, args=(channel,)).start()
+
+
+@delay(BREW_COUNTDOWN)
+def _brew_countdown(channel):
+    session = get_session()
+
     server = session.query(Server).filter_by(completed=False).first()
     if not server:
         return
@@ -53,11 +57,11 @@ def brew_countdown(channel):
     ), channel)
 
 
-@celery.task
 def update_slack_users():
     """
     Periodic task to update slack user info
     """
+    session = get_session()
     slack_users = sc.api_call('users.list')
     if not slack_users['ok']:
         return

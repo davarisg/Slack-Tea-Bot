@@ -3,21 +3,23 @@ from __future__ import absolute_import
 import uuid
 from unittest import TestCase
 
-from src.models import Base, User, session, engine, Server, Customer
+from src.models import Base, User, get_session, engine, Server, Customer
 
 
 class BaseTestCase(TestCase):
     def setUp(self):
         super(BaseTestCase, self).setUp()
         Base.metadata.create_all(engine)
+        self.session = get_session()
 
     def tearDown(self):
         super(BaseTestCase, self).tearDown()
-        session.rollback()
+        self.session.rollback()
         Base.metadata.drop_all(engine)
 
     @classmethod
     def _create_customer(cls, user_id, server_id):
+        session = get_session()
         customer = Customer(user_id=user_id, server_id=server_id)
         session.add(customer)
         session.flush()
@@ -26,6 +28,7 @@ class BaseTestCase(TestCase):
 
     @classmethod
     def _create_server(cls, user_id, completed=False):
+        session = get_session()
         server = Server(user_id=user_id, completed=completed)
         session.add(server)
         session.flush()
@@ -34,6 +37,7 @@ class BaseTestCase(TestCase):
 
     @classmethod
     def _create_user(cls, slack_id=None, username=None, first_name=None, real_name=None, *args, **kwargs):
+        session = get_session()
         user = User()
         if not slack_id:
             slack_id = 'U%s' % str(uuid.uuid4())[:6]

@@ -1,5 +1,5 @@
 from sqlalchemy import Boolean, Column, String, DateTime, ForeignKey, Integer, func, create_engine
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import relationship, sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
 from conf import SQLALCHEMY_ENGINE
@@ -7,8 +7,12 @@ from conf import SQLALCHEMY_ENGINE
 engine = create_engine(SQLALCHEMY_ENGINE, echo=False)
 Base = declarative_base()
 
-Session = sessionmaker(bind=engine)
-session = Session()
+session_factory = sessionmaker(bind=engine)
+Session = scoped_session(session_factory)
+
+
+def get_session():
+    return Session()
 
 
 class User(Base):

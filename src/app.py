@@ -2,9 +2,9 @@ import random
 import re
 import time
 
-from conf import BREW_COUNTDOWN, HELP_TEXT, NOMINATION_POINTS_REQUIRED
+from conf import HELP_TEXT, NOMINATION_POINTS_REQUIRED
 from managers import UserManager, ServerManager
-from models import Server, Customer, session, User
+from models import Server, Customer, User, get_session, Session
 from slack_client import sc
 from tasks import brew_countdown
 from utils import post_message
@@ -46,6 +46,7 @@ class Dispatcher(object):
         self.channel = ''
         self.command_body = ''
         self.request_user = None
+        self.session = get_session()
 
     def dispatch(self, event):
         self.channel = event[0].get('channel', '')
@@ -75,16 +76,16 @@ class Dispatcher(object):
         if ServerManager.has_active_server():
             return post_message('Someone else is already making tea. Want in?',  self.channel)
 
-        session.add(Server(user_id=self.request_user.id))
-        session.commit()
-        brew_countdown.apply_async(countdown=BREW_COUNTDOWN, args=(self.channel,))
+        self.session.add(Server(user_id=self.request_user.id))
+        self.session.commit()
+        brew_countdown(self.channel)
         return post_message(random.choice(['%s is making tea, who is in?' % self.request_user.first_name, 'Who wants a cuppa?']),  self.channel)
 
     def help(self):
         return post_message(HELP_TEXT,  self.channel)
 
     def leaderboard(self):
-        leaderboard = session.query(User).filter(User.tea_type.isnot(None)).order_by(User.teas_brewed.desc()).all()
+        leaderboard = self.session.query(User).filter(User.tea_type.isnot(None)).order_by(User.teas_brewed.desc()).all()
         _message = '*Teabot Leaderboard*\n\n'
         for index, user in enumerate(leaderboard):
             _message += '%s. _%s_ has brewed *%s* cups of tea\n' % (index + 1, user.real_name, user.teas_brewed)
@@ -93,7 +94,7 @@ class Dispatcher(object):
 
     @require_registration
     def me(self):
-        server = session.query(Server).filter_by(completed=False)
+        server = self.session.query(Server).filter_by(completed=False)
         if not server.count():
             return post_message('No one has volunteered to make tea, why dont you make it %s?' % self.request_user.first_name, self.channel)
 
@@ -104,11 +105,11 @@ class Dispatcher(object):
                 '%s you are making tea! :face_with_rolling_eyes:' % self.request_user.first_name, self.channel
             )
 
-        if session.query(Customer).filter_by(user_id=self.request_user.id, server_id=server.id).count():
+        if self.session.query(Customer).filter_by(user_id=self.request_user.id, server_id=server.id).count():
             return post_message('You said it once already %s.' % self.request_user.first_name, self.channel)
 
-        session.add(Customer(user_id=self.request_user.id, server_id=server.id))
-        session.commit()
+        self.session.add(Customer(user_id=self.request_user.id, server_id=server.id))
+        self.session.commit()
         return post_message('Hang tight %s, tea is being served soon' % self.request_user.first_name, self.channel)
 
     @require_registration
@@ -135,11 +136,11 @@ class Dispatcher(object):
         nominated_user.nomination_points -= NOMINATION_POINTS_REQUIRED
 
         server = Server(user_id=nominated_user.id)
-        session.add(server)
-        session.flush()
-        session.add(Customer(user_id=self.request_user.id, server_id=server.id))
-        session.commit()
-        brew_countdown.apply_async(countdown=BREW_COUNTDOWN, args=(self.channel,))
+        self.session.add(server)
+        self.session.flush()
+        self.session.add(Customer(user_id=self.request_user.id, server_id=server.id))
+        self.session.commit()
+        brew_countdown(self.channel)
 
         return post_message('%s has nominated %s to make tea! Who wants in?' % (
             self.request_user.first_name,
@@ -162,7 +163,7 @@ class Dispatcher(object):
         if slack_id:
             users = [UserManager.get_by_slack_id(slack_id)]
         else:
-            users = session.query(User).filter(User.tea_type.isnot(None)).all()
+            users = self.session.query(User).filter(User.tea_type.isnot(None)).all()
 
         results = []
 
@@ -199,7 +200,7 @@ class Dispatcher(object):
             message = 'I have updated your tea preference.'
 
         self.request_user.tea_type = self.command_body
-        session.commit()
+        self.session.commit()
         return post_message(message, self.channel)
 
     def yo(self):
