@@ -138,7 +138,7 @@ class DispatcherTestCase(BaseTestCase):
                     self.registered_user1.first_name
                 ),
                 'tearoom',
-                gif_search_term='celebrate'
+                gif_search_phrase='celebrate'
             )
             self.assertEqual(
                 self.session.query(Server).filter_by(

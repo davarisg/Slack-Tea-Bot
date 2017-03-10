@@ -85,7 +85,7 @@ class Dispatcher(object):
                 'Who wants a cuppa?'
             ]),
             self.channel,
-            gif_search_term='' if random.random() >= 0.5 else 'tea time'
+            gif_search_phrase='' if random.random() >= 0.3 else 'tea time'
         )
 
     def help(self):
@@ -155,7 +155,7 @@ class Dispatcher(object):
                 nominated_user.first_name
             ),
             self.channel,
-            gif_search_term='celebrate'
+            gif_search_phrase='celebrate'
         )
 
     def ping(self):

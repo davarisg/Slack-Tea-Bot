@@ -1,9 +1,10 @@
 import random
 
+from giphypop import Giphy, GiphyApiException
+from slack_client import sc
 from sqlalchemy.sql import ClauseElement
 
-from slack_client import sc
-from giphy_client import giphy_client
+giphy_client = Giphy()
 
 
 def get_or_create(session, model, defaults=None, **kwargs):
@@ -18,10 +19,15 @@ def get_or_create(session, model, defaults=None, **kwargs):
         return instance, True
 
 
-def post_message(text, channel, attachments=None, mrkdwn=False, gif_search_term=None):
+def post_message(text, channel, attachments=None, mrkdwn=False, gif_search_phrase=None):
     gif_url = None
-    if gif_search_term:
-        gif_url = random.choice(list(giphy_client.search(gif_search_term))).media_url
+    if gif_search_phrase:
+        try:
+            gif_url = random.choice(giphy_client.search(phrase=gif_search_phrase, limit=50)).media_url
+        except GiphyApiException:  # If the API call errors
+            pass
+        except IndexError:  # If the API call returns no results
+            pass
 
     if gif_url is not None:
         text += '\n\n%s' % gif_url
