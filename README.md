@@ -7,15 +7,13 @@ A tea bot for Slack.
 ## Available Commands ##
 
 1. _register_ - Registers the tea preference of a user (`@teabot register green tea`)
-![Register](screenshots/register.png)
 2. _brew_ - Initiates the brewing process (users have 120 seconds to respond) (`@teabot brew`)
 3. _me_ - Reply with `@teabot me` when someone has offered to brew
-![Brew](screenshots/brew.png)
 4. _leaderboard_ - Displays the current leaderboard based on tea cups brewed (`@teabot leaderboard`)
-![Leaderboard](screenshots/leaderboard.png)
 5. _stats_ - Displays the stats for all users (`@teabot stats`) or (`@teabot stats @george`) for a single user
-![Stats](screenshots/stats.png)
 6. _nominate_ - Nominate someone to brew tea. You must brew tea more than %s times to use this (`@teabot nominate @george`)
+
+![Teabot Preview](https://github.com/davarisg/Slack-Tea-Bot/blob/master/screenshots/teabot-preview.gif)
 
 
 ## How to run the app ##
