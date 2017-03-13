@@ -23,7 +23,7 @@ def post_message(text, channel, attachments=None, mrkdwn=False, gif_search_phras
     gif_url = None
     if gif_search_phrase:
         try:
-            gif_url = random.choice(giphy_client.search(phrase=gif_search_phrase, limit=50)).media_url
+            gif_url = random.choice(list(giphy_client.search(phrase=gif_search_phrase, limit=50))).media_url
         except GiphyApiException:  # If the API call errors
             pass
         except IndexError:  # If the API call returns no results
