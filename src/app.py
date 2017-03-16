@@ -79,7 +79,14 @@ class Dispatcher(object):
         self.session.add(Server(user_id=self.request_user.id))
         self.session.commit()
         brew_countdown(self.channel)
-        return post_message(random.choice(['%s is making tea, who is in?' % self.request_user.first_name, 'Who wants a cuppa?']),  self.channel)
+        return post_message(
+            random.choice([
+                '%s is making tea, who is in?' % self.request_user.first_name,
+                'Who wants a cuppa?'
+            ]),
+            self.channel,
+            gif_search_phrase='' if random.random() >= 0.3 else 'tea time'
+        )
 
     def help(self):
         return post_message(HELP_TEXT,  self.channel)
@@ -142,10 +149,14 @@ class Dispatcher(object):
         self.session.commit()
         brew_countdown(self.channel)
 
-        return post_message('%s has nominated %s to make tea! Who wants in?' % (
-            self.request_user.first_name,
-            nominated_user.first_name
-        ), self.channel)
+        return post_message(
+            '%s has nominated %s to make tea! Who wants in?' % (
+                self.request_user.first_name,
+                nominated_user.first_name
+            ),
+            self.channel,
+            gif_search_phrase='celebrate'
+        )
 
     def ping(self):
         return post_message('pong', self.channel)
