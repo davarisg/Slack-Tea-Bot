@@ -12,7 +12,7 @@ class DispatcherTestCase(BaseTestCase):
         super(DispatcherTestCase, self).setUp()
         self.tea_bot = self._create_user(slack_id='U123456', username='teabot')
         self.dispatcher = Dispatcher(self.tea_bot)
-        self.registered_user = self._create_user(tea_type='green tea')
+        self.registered_user = self._create_user(first_name='Jon', tea_type='green tea')
         self.unregistered_user = self._create_user(first_name='George')
 
         self.patcher = patch('src.app.post_message')
@@ -69,6 +69,46 @@ class DispatcherTestCase(BaseTestCase):
             self.mock_post_message.assert_called_with('Someone else is already making tea. Want in?', 'tearoom')
             self.assertTrue(ServerManager.has_active_server())
 
+    def test_brew_with_limit(self):
+        # Brew with bad limit
+        self.dispatcher.dispatch([{
+            'channel': 'tearoom',
+            'text': '<@U123456> brew 0',
+            'user': self.registered_user.slack_id
+        }])
+        self.mock_post_message.assert_called_with(
+            'That is quite selfish Jon. You have to choose a number greater than 1!',
+            'tearoom'
+        )
+
+        # Brew with non-numerical limit
+        self.dispatcher.dispatch([{
+            'channel': 'tearoom',
+            'text': '<@U123456> brew abcd',
+            'user': self.registered_user.slack_id
+        }])
+        self.mock_post_message.assert_called_with(
+            'I did not understand what `abcd` means',
+            'tearoom'
+        )
+
+        # Test with a good limit value
+        with patch('src.app.brew_countdown') as mock_brew_countdown:
+            self.dispatcher.dispatch([{
+                'channel': 'tearoom',
+                'text': '<@U123456> brew 3',
+                'user': self.registered_user.slack_id
+            }])
+            mock_brew_countdown.assert_called_with('tearoom')
+            self.assertTrue(ServerManager.has_active_server())
+            self.assertTrue(
+                self.session.query(Server).filter_by(
+                    user_id=self.registered_user.id,
+                    completed=False,
+                    limit=3
+                ).count()
+            )
+
     def test_me(self):
         user = self._create_user(tea_type='mint tea')
         server = self._create_server(user.id)
@@ -115,6 +155,24 @@ class DispatcherTestCase(BaseTestCase):
         }])
         self.mock_post_message.assert_called_with(
             '%s you are making tea! :face_with_rolling_eyes:' % self.registered_user.first_name,
+            'tearoom'
+        )
+        self.assertIsNone(CustomerManager.get_for_user_server(self.registered_user.id, server.id))
+
+    def test_me_with_limit_exceeded(self):
+        user1 = self._create_user(tea_type='mint tea', first_name='Sam')
+        user2 = self._create_user(tea_type='green tea')
+        server = self._create_server(user1.id, limit=2)
+        self._create_customer(user1.id, server.id)
+        self._create_customer(user2.id, server.id)
+
+        self.dispatcher.dispatch([{
+            'channel': 'tearoom',
+            'text': '<@U123456> me',
+            'user': self.registered_user.slack_id
+        }])
+        self.mock_post_message.assert_called_with(
+            'I am sorry %s but %s will only brew 2 cups' % (self.registered_user.first_name, user1.first_name),
             'tearoom'
         )
         self.assertIsNone(CustomerManager.get_for_user_server(self.registered_user.id, server.id))

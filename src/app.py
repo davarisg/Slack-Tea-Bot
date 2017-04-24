@@ -76,12 +76,29 @@ class Dispatcher(object):
         if ServerManager.has_active_server():
             return post_message('Someone else is already making tea. Want in?',  self.channel)
 
-        self.session.add(Server(user_id=self.request_user.id))
+        limit = None
+        stripped_command_body = self.command_body.strip()
+        if stripped_command_body:
+            try:
+                limit = int(stripped_command_body)
+                if limit <= 1:
+                    return post_message(
+                        'That is quite selfish %s. You have to choose a number greater than 1!' % self.request_user.first_name,
+                        self.channel
+                    )
+            except ValueError:
+                return post_message('I did not understand what `%s` means' % stripped_command_body, self.channel)
+
+        self.session.add(Server(user_id=self.request_user.id, limit=limit))
         self.session.commit()
         brew_countdown(self.channel)
+
         return post_message(
             random.choice([
-                '%s is making tea, who is in?' % self.request_user.first_name,
+                '%s is making %s tea, who is in?' % (
+                    self.request_user.first_name,
+                    '' if limit is None else '%s cups of' % limit
+                ),
                 'Who wants a cuppa?'
             ]),
             self.channel,
@@ -114,6 +131,12 @@ class Dispatcher(object):
 
         if self.session.query(Customer).filter_by(user_id=self.request_user.id, server_id=server.id).count():
             return post_message('You said it once already %s.' % self.request_user.first_name, self.channel)
+
+        if server.limit >= self.session.query(Customer).filter_by(server_id=server.id).count():
+            return post_message(
+                'I am sorry %s but %s will only brew %s cups' % (self.request_user.first_name, server.user.first_name, server.limit),
+                self.channel
+            )
 
         self.session.add(Customer(user_id=self.request_user.id, server_id=server.id))
         self.session.commit()
