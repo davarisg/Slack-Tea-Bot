@@ -40,6 +40,7 @@ class Server(Base):
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship('User', foreign_keys=[user_id])
     completed = Column(Boolean, default=False)
+    limit = Column(Integer, default=None, nullable=True)  # An optional limit on the number of teas the server will brew
     created = Column(DateTime, default=func.current_timestamp())
 
 

@@ -27,9 +27,9 @@ class BaseTestCase(TestCase):
         return customer
 
     @classmethod
-    def _create_server(cls, user_id, completed=False):
+    def _create_server(cls, user_id, completed=False, limit=None):
         session = get_session()
-        server = Server(user_id=user_id, completed=completed)
+        server = Server(user_id=user_id, completed=completed, limit=limit)
         session.add(server)
         session.flush()
         session.commit()
