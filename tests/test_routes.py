@@ -159,6 +159,20 @@ class DispatcherTestCase(BaseTestCase):
         )
         self.assertIsNone(CustomerManager.get_for_user_server(self.registered_user.id, server.id))
 
+    def test_me_with_limit(self):
+        user = self._create_user(tea_type='mint tea')
+        server = self._create_server(user.id, limit=2)
+        self.dispatcher.dispatch([{
+            'channel': 'tearoom',
+            'text': '<@U123456> me',
+            'user': self.registered_user.slack_id
+        }])
+        self.mock_post_message.assert_called_with(
+            'Hang tight %s, tea is being served soon' % self.registered_user.first_name,
+            'tearoom'
+        )
+        self.assertIsNotNone(CustomerManager.get_for_user_server(self.registered_user.id, server.id))
+
     def test_me_with_limit_exceeded(self):
         user1 = self._create_user(tea_type='mint tea', first_name='Sam')
         user2 = self._create_user(tea_type='green tea')
