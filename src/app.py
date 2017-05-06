@@ -6,11 +6,11 @@ from conf import HELP_TEXT, NOMINATION_POINTS_REQUIRED
 from managers import UserManager, ServerManager
 from models import Server, Customer, User, get_session, Session
 from slack_client import sc
-from tasks import brew_countdown
+from tasks import brew_countdown, update_slack_users
 from utils import post_message
 
 COMMAND_RE = re.compile(
-    r'^<@([\w\d]+)>:? (register|brew|me|stats|leaderboard|nominate|yo|ping|help)\s?(.*)?$',
+    r'^<@([\w\d]+)>:? (register|brew|me|stats|leaderboard|nominate|update_users|yo|ping|help)\s?(.*)?$',
     flags=re.IGNORECASE
 )
 MENTION_RE = re.compile(r'^<@([\w\d]+)>$')
@@ -239,6 +239,10 @@ class Dispatcher(object):
 
     def yo(self):
         return post_message('Sup?', self.channel)
+
+    def update_users(self):
+        update_slack_users()
+        return post_message('I have updated the user registry', self.channel)
 
 
 if __name__ == '__main__':

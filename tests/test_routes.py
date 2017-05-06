@@ -468,3 +468,14 @@ class DispatcherTestCase(BaseTestCase):
         }])
 
         self.mock_post_message.assert_called_with('I did not understand that. Try `@teabot help`', 'tearoom')
+
+    def test_update_users(self):
+        with patch('src.app.update_slack_users') as mock_update_slack_users:
+            self.dispatcher.dispatch([{
+                'channel': 'tearoom',
+                'text': '<@U123456> update_users',
+                'user': self.unregistered_user.slack_id
+            }])
+
+            mock_update_slack_users.assert_called_once_with()
+            self.mock_post_message.assert_called_once_with('I have updated the user registry', 'tearoom')
