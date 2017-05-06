@@ -132,7 +132,9 @@ class Dispatcher(object):
         if self.session.query(Customer).filter_by(user_id=self.request_user.id, server_id=server.id).count():
             return post_message('You said it once already %s.' % self.request_user.first_name, self.channel)
 
-        if server.limit and self.session.query(Customer).filter_by(server_id=server.id).count() >= server.limit:
+        # Check if the server's brew limit has been exceeded. The limit is inclusive of the server's cup.
+        customers = self.session.query(Customer).filter_by(server_id=server.id).count()
+        if server.limit and customers + 1 >= server.limit:
             return post_message(
                 'I am sorry %s but %s will only brew %s cups' % (self.request_user.first_name, server.user.first_name, server.limit),
                 self.channel

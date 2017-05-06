@@ -177,8 +177,13 @@ class DispatcherTestCase(BaseTestCase):
         user1 = self._create_user(tea_type='mint tea', first_name='Sam')
         user2 = self._create_user(tea_type='green tea')
         server = self._create_server(user1.id, limit=2)
-        self._create_customer(user1.id, server.id)
-        self._create_customer(user2.id, server.id)
+
+        self.dispatcher.dispatch([{
+            'channel': 'tearoom',
+            'text': '<@U123456> me',
+            'user': user2.slack_id
+        }])
+        self.mock_post_message.clear()
 
         self.dispatcher.dispatch([{
             'channel': 'tearoom',
