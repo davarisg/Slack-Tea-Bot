@@ -33,6 +33,10 @@ class User(Base):
     teas_received = Column(Integer, nullable=False, default=0)
     times_brewed = Column(Integer, nullable=False, default=0)
 
+    @property
+    def display_name(self):
+        return self.first_name or self.username
+
 
 class Server(Base):
     __tablename__ = 'server'

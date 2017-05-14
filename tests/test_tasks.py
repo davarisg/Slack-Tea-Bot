@@ -48,7 +48,7 @@ class TasksTestCase(BaseTestCase):
         self.assertEqual(user1.times_brewed, 0)
         self.assertEqual(user1.nomination_points, 0)
         self.mock_post_message.assert_called_with(
-            'Time is up!\n%s wants %s' % (user1.first_name, user1.tea_type),
+            'Time is up!\n%s wants %s' % (user1.display_name, user1.tea_type),
             'tearoom'
         )
 

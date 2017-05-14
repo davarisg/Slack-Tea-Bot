@@ -53,7 +53,7 @@ def _brew_countdown(channel):
 
     return post_message("\n".join(
         ['Time is up!'] +
-        ['%s wants %s' % (customer.user.first_name, customer.user.tea_type) for customer in customers]
+        ['%s wants %s' % (customer.user.display_name, customer.user.tea_type) for customer in customers]
     ), channel)
 
 

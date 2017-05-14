@@ -119,7 +119,7 @@ class DispatcherTestCase(BaseTestCase):
             'user': self.registered_user.slack_id
         }])
         self.mock_post_message.assert_called_with(
-            'Hang tight %s, tea is being served soon' % self.registered_user.first_name,
+            'Hang tight %s, tea is being served soon' % self.registered_user.display_name,
             'tearoom'
         )
         self.assertIsNotNone(CustomerManager.get_for_user_server(self.registered_user.id, server.id))
@@ -140,7 +140,7 @@ class DispatcherTestCase(BaseTestCase):
             'user': self.registered_user.slack_id
         }])
         self.mock_post_message.assert_called_with(
-            'No one has volunteered to make tea, why dont you make it %s?' % self.registered_user.first_name,
+            'No one has volunteered to make tea, why dont you make it %s?' % self.registered_user.display_name,
             'tearoom'
         )
         self.assertEqual(self.session.query(Customer).filter_by(user_id=self.registered_user.id).count(), 0)
@@ -154,7 +154,7 @@ class DispatcherTestCase(BaseTestCase):
             'user': self.registered_user.slack_id
         }])
         self.mock_post_message.assert_called_with(
-            '%s you are making tea! :face_with_rolling_eyes:' % self.registered_user.first_name,
+            '%s you are making tea! :face_with_rolling_eyes:' % self.registered_user.display_name,
             'tearoom'
         )
         self.assertIsNone(CustomerManager.get_for_user_server(self.registered_user.id, server.id))
@@ -168,7 +168,7 @@ class DispatcherTestCase(BaseTestCase):
             'user': self.registered_user.slack_id
         }])
         self.mock_post_message.assert_called_with(
-            'Hang tight %s, tea is being served soon' % self.registered_user.first_name,
+            'Hang tight %s, tea is being served soon' % self.registered_user.display_name,
             'tearoom'
         )
         self.assertIsNotNone(CustomerManager.get_for_user_server(self.registered_user.id, server.id))
@@ -191,7 +191,7 @@ class DispatcherTestCase(BaseTestCase):
             'user': self.registered_user.slack_id
         }])
         self.mock_post_message.assert_called_with(
-            'I am sorry %s but %s will only brew 2 cups' % (self.registered_user.first_name, user1.first_name),
+            'I am sorry %s but %s will only brew 2 cups' % (self.registered_user.display_name, user1.display_name),
             'tearoom'
         )
         self.assertIsNone(CustomerManager.get_for_user_server(self.registered_user.id, server.id))
@@ -211,8 +211,8 @@ class DispatcherTestCase(BaseTestCase):
             }])
             self.mock_post_message.assert_any_call(
                 '%s has nominated %s to make tea! Who wants in?' % (
-                    self.registered_user.first_name,
-                    self.registered_user1.first_name
+                    self.registered_user.display_name,
+                    self.registered_user1.display_name
                 ),
                 'tearoom',
                 gif_search_phrase='celebrate'

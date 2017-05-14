@@ -83,7 +83,7 @@ class Dispatcher(object):
                 limit = int(stripped_command_body)
                 if limit <= 1:
                     return post_message(
-                        'That is quite selfish %s. You have to choose a number greater than 1!' % self.request_user.first_name,
+                        'That is quite selfish %s. You have to choose a number greater than 1!' % self.request_user.display_name,
                         self.channel
                     )
             except ValueError:
@@ -96,7 +96,7 @@ class Dispatcher(object):
         return post_message(
             random.choice([
                 '%s is making %s tea, who is in?' % (
-                    self.request_user.first_name,
+                    self.request_user.display_name,
                     '' if limit is None else '%s cups of' % limit
                 ),
                 'Who wants a cuppa?'
@@ -120,29 +120,29 @@ class Dispatcher(object):
     def me(self):
         server = self.session.query(Server).filter_by(completed=False)
         if not server.count():
-            return post_message('No one has volunteered to make tea, why dont you make it %s?' % self.request_user.first_name, self.channel)
+            return post_message('No one has volunteered to make tea, why dont you make it %s?' % self.request_user.display_name, self.channel)
 
         server = server.first()
 
         if server.user_id == self.request_user.id:
             return post_message(
-                '%s you are making tea! :face_with_rolling_eyes:' % self.request_user.first_name, self.channel
+                '%s you are making tea! :face_with_rolling_eyes:' % self.request_user.display_name, self.channel
             )
 
         if self.session.query(Customer).filter_by(user_id=self.request_user.id, server_id=server.id).count():
-            return post_message('You said it once already %s.' % self.request_user.first_name, self.channel)
+            return post_message('You said it once already %s.' % self.request_user.display_name, self.channel)
 
         # Check if the server's brew limit has been exceeded. The limit is inclusive of the server's cup.
         customers = self.session.query(Customer).filter_by(server_id=server.id).count()
         if server.limit and customers + 1 >= server.limit:
             return post_message(
-                'I am sorry %s but %s will only brew %s cups' % (self.request_user.first_name, server.user.first_name, server.limit),
+                'I am sorry %s but %s will only brew %s cups' % (self.request_user.display_name, server.user.display_name, server.limit),
                 self.channel
             )
 
         self.session.add(Customer(user_id=self.request_user.id, server_id=server.id))
         self.session.commit()
-        return post_message('Hang tight %s, tea is being served soon' % self.request_user.first_name, self.channel)
+        return post_message('Hang tight %s, tea is being served soon' % self.request_user.display_name, self.channel)
 
     @require_registration
     def nominate(self):
@@ -176,8 +176,8 @@ class Dispatcher(object):
 
         return post_message(
             '%s has nominated %s to make tea! Who wants in?' % (
-                self.request_user.first_name,
-                nominated_user.first_name
+                self.request_user.display_name,
+                nominated_user.display_name
             ),
             self.channel,
             gif_search_phrase='celebrate'
@@ -231,7 +231,7 @@ class Dispatcher(object):
         if not self.command_body:
             return post_message('You didn\'t tell me what type of tea you like. Try typing `@teabot register green tea`', self.channel)
 
-        message = 'Welcome to the tea party %s' % self.request_user.first_name
+        message = 'Welcome to the tea party %s' % self.request_user.display_name
         if self.request_user.tea_type:
             message = 'I have updated your tea preference.'
 
